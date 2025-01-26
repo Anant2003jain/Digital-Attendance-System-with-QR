@@ -2,6 +2,10 @@ import cv2
 import csv
 import numpy as np
 from tensorflow.keras.models import load_model  # type: ignore
+import os
+import warnings
+warnings.filterwarnings("ignore")
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 # Load label mapping
 label_dict = {}

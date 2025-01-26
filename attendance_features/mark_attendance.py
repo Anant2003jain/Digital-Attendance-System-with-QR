@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.image import img_to_array   # type: ignore
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+import warnings
+warnings.filterwarnings("ignore")
 
 # Function to load and preprocess images for training
 def load_images_from_folder(folder):

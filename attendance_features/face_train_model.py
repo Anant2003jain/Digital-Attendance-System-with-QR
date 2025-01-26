@@ -9,6 +9,8 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator # type: igno
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+import warnings
+warnings.filterwarnings("ignore")
 
 # Load label mapping
 label_dict = {}
