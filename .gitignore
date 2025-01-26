@@ -1,6 +1,7 @@
+__pycache__/
+attendance_features\__pycache__
 Model
-StudentData
-__pycache__
 resnet_face_recognition_model.h5
 haarcascade_frontalface_default.xml
 FullAttendanceSystem.ipynb
+student_data/
