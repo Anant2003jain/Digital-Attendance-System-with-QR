@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Charts - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-chart-pie me-2"></i>Attendance Charts</h1>
+        <div>
+            <a href="{{ url_for('attendance_list') }}" class="btn btn-primary me-2">
+                <i class="fas fa-clipboard-list me-1"></i>View Attendance
+            </a>
+            <button id="download-charts" class="btn btn-success">
+                <i class="fas fa-download me-1"></i>Download All
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Overall Attendance Chart -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Overall Attendance Rate</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink1">
+                            <div class="dropdown-header">Chart Options:</div>
+                            <a class="dropdown-item" href="#" id="download-overall"><i class="fas fa-download me-1"></i>Download</a>
+                            <a class="dropdown-item" href="#" id="refresh-overall"><i class="fas fa-sync-alt me-1"></i>Refresh</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="overallAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Comparison Chart -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Student Attendance Comparison</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink2">
+                            <div class="dropdown-header">Chart Options:</div>
+                            <a class="dropdown-item" href="#" id="download-comparison"><i class="fas fa-download me-1"></i>Download</a>
+                            <a class="dropdown-item" href="#" id="refresh-comparison"><i class="fas fa-sync-alt me-1"></i>Refresh</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="studentComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Weekly Trend Chart -->
+        <div class="col-xl-8 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Weekly Attendance Trend</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink3">
+                            <div class="dropdown-header">Chart Options:</div>
+                            <a class="dropdown-item" href="#" id="download-weekly"><i class="fas fa-download me-1"></i>Download</a>
+                            <a class="dropdown-item" href="#" id="refresh-weekly"><i class="fas fa-sync-alt me-1"></i>Refresh</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="weeklyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Distribution Chart -->
+        <div class="col-xl-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Attendance Time Distribution</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink4">
+                            <div class="dropdown-header">Chart Options:</div>
+                            <a class="dropdown-item" href="#" id="download-time"><i class="fas fa-download me-1"></i>Download</a>
+                            <a class="dropdown-item" href="#" id="refresh-time"><i class="fas fa-sync-alt me-1"></i>Refresh</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="timeDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student-specific Charts -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Individual Student Attendance</h6>
+        </div>
+        <div class="card-body">
+            <div class="form-group mb-4">
+                <label for="studentSelect" class="form-label">Select Student:</label>
+                <select class="form-select" id="studentSelect">
+                    <option value="">-- Select a student --</option>
+                    {% for student in students %}
+                    <option value="{{ student.id }}">{{ student.first_name }} {{ student.last_name }} ({{ student.enrollment_no }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div id="student-chart-container" class="d-none">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-left-primary shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Attendance Rate</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="student-attendance-rate">0%</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-left-success shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Present Days</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="student-present-days">0/0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Monthly Attendance</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height:250px;">
+                                    <canvas id="studentMonthlyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow h-100">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Attendance Status</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height:250px;">
+                                    <canvas id="studentStatusChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="no-student-selected" class="text-center py-5">
+                <i class="fas fa-user-graduate fa-4x text-gray-300 mb-3"></i>
+                <p class="mb-0">Select a student to view their attendance charts</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart.js global settings
+    Chart.defaults.font.family = '"Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    Chart.defaults.color = '#858796';
+    
+    // Chart colors
+    const primaryColor = '#4e73df';
+    const successColor = '#1cc88a';
+    const infoColor = '#36b9cc';
+    const warningColor = '#f6c23e';
+    const dangerColor = '#e74a3b';
+    
+    // Function to download chart as image
+    function downloadChart(chartId, filename) {
+        const canvas = document.getElementById(chartId);
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = image;
+        link.click();
+    }
+    
+    // Overall Attendance Chart
+    const overallCtx = document.getElementById('overallAttendanceChart').getContext('2d');
+    const overallChart = new Chart(overallCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Present', 'Absent'],
+            datasets: [{
+                data: [{{ overall_present }}, {{ overall_absent }}],
+                backgroundColor: [successColor, dangerColor],
+                hoverBackgroundColor: [successColor, dangerColor],
+                hoverBorderColor: 'rgba(234, 236, 244, 1)',
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((acc, data) => acc + data, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Student Comparison Chart
+    const comparisonCtx = document.getElementById('studentComparisonChart').getContext('2d');
+    const comparisonChart = new Chart(comparisonCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ student_names|tojson }},
+            datasets: [{
+                label: 'Attendance Rate (%)',
+                data: {{ student_attendance_rates|tojson }},
+                backgroundColor: primaryColor,
+                borderColor: primaryColor,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Weekly Trend Chart
+    const weeklyCtx = document.getElementById('weeklyTrendChart').getContext('2d');
+    const weeklyChart = new Chart(weeklyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ weekly_dates|tojson }},
+            datasets: [{
+                label: 'Attendance Count',
+                data: {{ weekly_counts|tojson }},
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                borderColor: primaryColor,
+                pointRadius: 3,
+                pointBackgroundColor: primaryColor,
+                pointBorderColor: primaryColor,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: primaryColor,
+                pointHoverBorderColor: primaryColor,
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Attendance: ${context.raw} students`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Time Distribution Chart
+    const timeCtx = document.getElementById('timeDistributionChart').getContext('2d');
+    const timeChart = new Chart(timeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['8-10 AM', '10-12 PM', '12-2 PM', '2-4 PM', '4-6 PM'],
+            datasets: [{
+                data: {{ time_distribution|tojson }},
+                backgroundColor: [primaryColor, successColor, infoColor, warningColor, dangerColor],
+                hoverBackgroundColor: [primaryColor, successColor, infoColor, warningColor, dangerColor],
+                hoverBorderColor: 'rgba(234, 236, 244, 1)',
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                }
+            }
+        }
+    });
+    
+    // Student-specific charts
+    let studentMonthlyChart = null;
+    let studentStatusChart = null;
+    
+    document.getElementById('studentSelect').addEventListener('change', function() {
+        const studentId = this.value;
+        
+        if (studentId) {
+            // Show loading state
+            document.getElementById('student-chart-container').classList.remove('d-none');
+            document.getElementById('no-student-selected').classList.add('d-none');
+            document.getElementById('student-attendance-rate').textContent = 'Loading...';
+            document.getElementById('student-present-days').textContent = 'Loading...';
+            
+            // Fetch student attendance data
+            fetch(`/api/student/${studentId}/attendance`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update stats
+                    document.getElementById('student-attendance-rate').textContent = `${data.attendance_rate}%`;
+                    document.getElementById('student-present-days').textContent = `${data.present_days}/${data.total_days}`;
+                    
+                    // Update or create monthly chart
+                    if (studentMonthlyChart) {
+                        studentMonthlyChart.data.labels = data.monthly_labels;
+                        studentMonthlyChart.data.datasets[0].data = data.monthly_present;
+                        studentMonthlyChart.data.datasets[1].data = data.monthly_absent;
+                        studentMonthlyChart.update();
+                    } else {
+                        const monthlyCtx = document.getElementById('studentMonthlyChart').getContext('2d');
+                        studentMonthlyChart = new Chart(monthlyCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.monthly_labels,
+                                datasets: [
+                                    {
+                                        label: 'Present',
+                                        data: data.monthly_present,
+                                        backgroundColor: successColor,
+                                        borderColor: successColor,
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'Absent',
+                                        data: data.monthly_absent,
+                                        backgroundColor: dangerColor,
+                                        borderColor: dangerColor,
+                                        borderWidth: 1
+                                    }
+                                ]
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            precision: 0
+                                        }
+                                    },
+                                    x: {
+                                        stacked: false
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top'
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Update or create status chart
+                    if (studentStatusChart) {
+                        studentStatusChart.data.datasets[0].data = [data.present_days, data.absent_days];
+                        studentStatusChart.update();
+                    } else {
+                        const statusCtx = document.getElementById('studentStatusChart').getContext('2d');
+                        studentStatusChart = new Chart(statusCtx, {
+                            type: 'pie',
+                            data: {
+                                labels: ['Present', 'Absent'],
+                                datasets: [{
+                                    data: [data.present_days, data.absent_days],
+                                    backgroundColor: [successColor, dangerColor],
+                                    hoverBackgroundColor: [successColor, dangerColor],
+                                    hoverBorderColor: 'rgba(234, 236, 244, 1)',
+                                }]
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            usePointStyle: true,
+                                            padding: 15
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching student data:', error);
+                    document.getElementById('student-attendance-rate').textContent = 'Error';
+                    document.getElementById('student-present-days').textContent = 'Error';
+                });
+        } else {
+            document.getElementById('student-chart-container').classList.add('d-none');
+            document.getElementById('no-student-selected').classList.remove('d-none');
+        }
+    });
+    
+    // Download chart buttons
+    document.getElementById('download-overall').addEventListener('click', function(e) {
+        e.preventDefault();
+        downloadChart('overallAttendanceChart', 'overall-attendance-chart.png');
+    });
+    
+    document.getElementById('download-comparison').addEventListener('click', function(e) {
+        e.preventDefault();
+        downloadChart('studentComparisonChart', 'student-comparison-chart.png');
+    });
+    
+    document.getElementById('download-weekly').addEventListener('click', function(e) {
+        e.preventDefault();
+        downloadChart('weeklyTrendChart', 'weekly-trend-chart.png');
+    });
+    
+    document.getElementById('download-time').addEventListener('click', function(e) {
+        e.preventDefault();
+        downloadChart('timeDistributionChart', 'time-distribution-chart.png');
+    });
+    
+    // Download all charts
+    document.getElementById('download-charts').addEventListener('click', function() {
+        downloadChart('overallAttendanceChart', 'overall-attendance-chart.png');
+        downloadChart('studentComparisonChart', 'student-comparison-chart.png');
+        downloadChart('weeklyTrendChart', 'weekly-trend-chart.png');
+        downloadChart('timeDistributionChart', 'time-distribution-chart.png');
+        
+        const studentId = document.getElementById('studentSelect').value;
+        if (studentId && studentMonthlyChart && studentStatusChart) {
+            downloadChart('studentMonthlyChart', 'student-monthly-chart.png');
+            downloadChart('studentStatusChart', 'student-status-chart.png');
+        }
+    });
+</script>
+{% endblock %}

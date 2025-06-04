@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h1>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Students</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ students_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-graduate fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Today's Attendance</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendance_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Attendance Rate</div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                                        {% if students_count > 0 %}
+                                            {{ (attendance_today / students_count * 100)|round|int }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="progress progress-sm mr-2">
+                                        <div class="progress-bar bg-info" role="progressbar" 
+                                            style="width: {% if students_count > 0 %}{{ (attendance_today / students_count * 100)|round|int }}{% else %}0{% endif %}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Current Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="current-time"></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-block py-3">
+                                <i class="fas fa-user-plus me-2"></i>Add New Student
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('mark_attendance_page') }}" class="btn btn-success btn-block py-3">
+                                <i class="fas fa-camera me-2"></i>Mark Attendance
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('attendance_list') }}" class="btn btn-info btn-block py-3 text-white">
+                                <i class="fas fa-clipboard-list me-2"></i>View Attendance
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('attendance_charts') }}" class="btn btn-warning btn-block py-3">
+                                <i class="fas fa-chart-pie me-2"></i>View Charts
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Attendance -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Attendance</h6>
+                    <a href="{{ url_for('attendance_list') }}" class="btn btn-sm btn-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_attendance %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Enrollment No</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance, student in recent_attendance %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('student_detail', student_id=student.id) }}">
+                                            {{ student.first_name }} {{ student.last_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ student.enrollment_no }}</td>
+                                    <td>{{ attendance.date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ attendance.status }}</span>
+                                    </td>
+                                    <td>{{ attendance.created_at.strftime('%H:%M:%S') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-gray-300 mb-3"></i>
+                        <p class="mb-0">No attendance records found.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    .btn-block {
+        display: block;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString();
+    }
+    
+    // Update time every second
+    setInterval(updateTime, 1000);
+    updateTime();
+</script>
+{% endblock %}

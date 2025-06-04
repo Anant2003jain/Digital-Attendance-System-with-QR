@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+
+{% block title %}Test Model - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-vial me-2"></i>Test Face Recognition Model</h1>
+        <div>
+            <a href="{{ url_for('train_model_page') }}" class="btn btn-primary me-2">
+                <i class="fas fa-brain me-2"></i>Train Model
+            </a>
+            <a href="{{ url_for('mark_attendance_page') }}" class="btn btn-success">
+                <i class="fas fa-camera me-2"></i>Mark Attendance
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Test Model Card -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Live Testing</h6>
+                </div>
+                <div class="card-body">
+                    {% if not model_exists %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> No trained model found. Please train the model first before testing.
+                    </div>
+                    <div class="text-center py-5">
+                        <i class="fas fa-brain fa-4x text-gray-300 mb-3"></i>
+                        <p class="mb-3">The face recognition model needs to be trained before testing.</p>
+                        <a href="{{ url_for('train_model_page') }}" class="btn btn-primary">
+                            <i class="fas fa-brain me-2"></i>Train Model
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Info:</strong> This page allows you to test the face recognition model without marking attendance. Position your face in front of the camera and the system will attempt to recognize you.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mx-auto">
+                            <div id="video-placeholder" class="d-flex flex-column align-items-center justify-content-center p-5 border rounded mb-3" style="min-height: 300px;">
+                                <i class="fas fa-camera fa-4x text-gray-300 mb-3"></i>
+                                <p class="mb-0">Camera feed will appear here</p>
+                            </div>
+                            
+                            <div id="video-container" class="mb-3" style="display: none;">
+                                <video id="video" width="100%" height="auto" autoplay></video>
+                                <canvas id="canvas" style="display: none;"></canvas>
+                                <canvas id="output-canvas" width="640" height="480" class="border rounded w-100"></canvas>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button id="start-camera" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-play-circle me-2"></i>Start Camera
+                                </button>
+                                <button id="stop-camera" class="btn btn-danger btn-lg" disabled>
+                                    <i class="fas fa-stop-circle me-2"></i>Stop Camera
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="recognition-result" class="mt-4 d-none">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">Recognition Result</h5>
+                                <div class="row align-items-center">
+                                    <div class="col-md-3 text-center">
+                                        <img id="result-image" src="" alt="Captured face" class="img-fluid rounded mb-2" style="max-height: 150px;">
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="mb-3">
+                                            <h6>Identified as:</h6>
+                                            <p id="result-name" class="h4 mb-0">-</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <h6>Confidence:</h6>
+                                            <div class="progress" style="height: 25px;">
+                                                <div id="result-confidence" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6>Enrollment Number:</h6>
+                                            <p id="result-enrollment" class="mb-0">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Information Card -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Testing Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="font-weight-bold">About Model Testing</h5>
+                        <p>Testing the face recognition model allows you to verify its accuracy without marking attendance. This is useful for troubleshooting and ensuring the model is working correctly.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="font-weight-bold">Tips for Better Recognition</h5>
+                        <ul>
+                            <li>Ensure good lighting on your face</li>
+                            <li>Position your face clearly in the frame</li>
+                            <li>Remove glasses or other face coverings</li>
+                            <li>Try different angles if recognition fails</li>
+                            <li>Keep a neutral expression</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="font-weight-bold">Troubleshooting</h5>
+                        <p>If the model consistently fails to recognize faces correctly:</p>
+                        <ul>
+                            <li>Ensure you have enough training images</li>
+                            <li>Retrain the model with more epochs</li>
+                            <li>Add more varied images of each student</li>
+                            <li>Check for proper lighting during testing</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> This is only for testing purposes. No attendance records will be created during testing.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Stats Card -->
+            {% if model_exists %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Model Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Last Trained</h5>
+                            <p class="mb-0 text-muted">{{ model_last_updated }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Recognizable Students</h5>
+                            <p class="mb-0 text-muted">{{ student_count }} students</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Model Accuracy</h5>
+                            <p class="mb-0 text-muted">{{ model_accuracy }}%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('train_model_page') }}" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-2"></i>Retrain Model
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if model_exists %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const startCameraBtn = document.getElementById('start-camera');
+        const stopCameraBtn = document.getElementById('stop-camera');
+        const videoPlaceholder = document.getElementById('video-placeholder');
+        const videoContainer = document.getElementById('video-container');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const outputCanvas = document.getElementById('output-canvas');
+        const recognitionResult = document.getElementById('recognition-result');
+        const resultImage = document.getElementById('result-image');
+        const resultName = document.getElementById('result-name');
+        const resultConfidence = document.getElementById('result-confidence');
+        const resultEnrollment = document.getElementById('result-enrollment');
+        
+        let stream = null;
+        let isProcessing = false;
+        let animationFrameId = null;
+        
+        // Start camera
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                videoPlaceholder.style.display = 'none';
+                videoContainer.style.display = 'block';
+                startCameraBtn.disabled = true;
+                stopCameraBtn.disabled = false;
+                recognitionResult.classList.add('d-none');
+                
+                // Start processing frames
+                processVideoFrames();
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Error accessing camera. Please make sure your camera is connected and permissions are granted.');
+            }
+        });
+        
+        // Stop camera
+        stopCameraBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                videoPlaceholder.style.display = 'flex';
+                videoContainer.style.display = 'none';
+                startCameraBtn.disabled = false;
+                stopCameraBtn.disabled = true;
+                
+                // Stop processing frames
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+            }
+        });
+        
+        // Process video frames
+        function processVideoFrames() {
+            if (!video.srcObject) return;
+            
+            const context = canvas.getContext('2d');
+            const outputContext = outputCanvas.getContext('2d');
+            
+            // Function to process each frame
+            function processFrame() {
+                if (!video.srcObject) return;
+                
+                // Set canvas dimensions to match video
+                if (video.videoWidth && video.videoHeight) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    outputCanvas.width = video.videoWidth;
+                    outputCanvas.height = video.videoHeight;
+                }
+                
+                // Draw video frame to hidden canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Draw the same frame to output canvas
+                outputContext.drawImage(video, 0, 0, outputCanvas.width, outputCanvas.height);
+                
+                // Process frame for face recognition if not already processing
+                if (!isProcessing) {
+                    isProcessing = true;
+                    
+                    // Convert to base64 image
+                    const imageData = canvas.toDataURL('image/jpeg');
+                    
+                    // Send to server for face recognition
+                    fetch('/api/test_model', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ image: imageData }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Draw face detection box
+                            if (data.face_box) {
+                                const [x, y, w, h] = data.face_box;
+                                outputContext.strokeStyle = '#1cc88a';
+                                outputContext.lineWidth = 3;
+                                outputContext.strokeRect(x, y, w, h);
+                                
+                                // Add name label
+                                outputContext.fillStyle = 'rgba(28, 200, 138, 0.8)';
+                                outputContext.fillRect(x, y - 30, w, 30);
+                                outputContext.fillStyle = 'white';
+                                outputContext.font = '16px Arial';
+                                outputContext.textAlign = 'center';
+                                outputContext.fillText(data.student_name, x + w/2, y - 10);
+                            }
+                            
+                            // Show recognition result
+                            recognitionResult.classList.remove('d-none');
+                            resultImage.src = imageData;
+                            resultName.textContent = data.student_name;
+                            
+                            // Update confidence bar
+                            const confidence = Math.round(data.confidence * 100);
+                            resultConfidence.style.width = `${confidence}%`;
+                            resultConfidence.setAttribute('aria-valuenow', confidence);
+                            resultConfidence.textContent = `${confidence}%`;
+                            
+                            // Set color based on confidence
+                            if (confidence >= 80) {
+                                resultConfidence.className = 'progress-bar bg-success';
+                            } else if (confidence >= 50) {
+                                resultConfidence.className = 'progress-bar bg-warning';
+                            } else {
+                                resultConfidence.className = 'progress-bar bg-danger';
+                            }
+                            
+                            resultEnrollment.textContent = data.enrollment_no;
+                        } else if (data.message === 'No face detected') {
+                            // Clear previous results but keep the result div visible
+                            recognitionResult.classList.remove('d-none');
+                            resultName.textContent = 'No face detected';
+                            resultConfidence.style.width = '0%';
+                            resultConfidence.setAttribute('aria-valuenow', 0);
+                            resultConfidence.textContent = '0%';
+                            resultConfidence.className = 'progress-bar';
+                            resultEnrollment.textContent = '-';
+                        } else {
+                            // Unknown person or error
+                            recognitionResult.classList.remove('d-none');
+                            resultName.textContent = 'Unknown Person';
+                            resultConfidence.style.width = '0%';
+                            resultConfidence.setAttribute('aria-valuenow', 0);
+                            resultConfidence.textContent = '0%';
+                            resultConfidence.className = 'progress-bar bg-danger';
+                            resultEnrollment.textContent = '-';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    })
+                    .finally(() => {
+                        // Allow processing again after a short delay
+                        setTimeout(() => {
+                            isProcessing = false;
+                        }, 500); // Process at most every 500ms
+                    });
+                }
+                
+                // Continue processing frames
+                animationFrameId = requestAnimationFrame(processFrame);
+            }
+            
+            // Start processing frames
+            processFrame();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

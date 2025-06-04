@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-camera me-2"></i>Mark Attendance</h1>
+        <a href="{{ url_for('attendance_list') }}" class="btn btn-primary">
+            <i class="fas fa-clipboard-list me-2"></i>View Attendance Records
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Face Recognition Method -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Face Recognition</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div id="face-recognition-container" class="mb-3">
+                        <div id="video-placeholder" class="d-flex flex-column align-items-center justify-content-center p-5 border rounded mb-3" style="min-height: 300px;">
+                            <i class="fas fa-camera fa-4x text-gray-300 mb-3"></i>
+                            <p class="mb-0">Camera feed will appear here</p>
+                        </div>
+                        <div id="video-container" class="mb-3" style="display: none;">
+                            <video id="video" width="100%" height="auto" autoplay></video>
+                            <canvas id="canvas" style="display: none;"></canvas>
+                        </div>
+                        <div id="recognition-result" class="alert alert-info d-none">
+                            <span id="result-message"></span>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="start-camera" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play-circle me-2"></i>Start Camera
+                        </button>
+                        <button id="capture-face" class="btn btn-success btn-lg" disabled>
+                            <i class="fas fa-camera me-2"></i>Capture & Recognize
+                        </button>
+                        <button id="stop-camera" class="btn btn-danger btn-lg" disabled>
+                            <i class="fas fa-stop-circle me-2"></i>Stop Camera
+                        </button>
+                    </div>
+                    <div class="mt-3 text-start">
+                        <h6 class="font-weight-bold">Instructions:</h6>
+                        <ol class="text-muted">
+                            <li>Click "Start Camera" to activate your webcam</li>
+                            <li>Position your face clearly in the frame</li>
+                            <li>Click "Capture & Recognize" to mark attendance</li>
+                            <li>Wait for the system to recognize your face</li>
+                            <li>Click "Stop Camera" when finished</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code Method -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">QR Code Scanner</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div id="qr-reader-container" class="mb-3">
+                        <div id="qr-placeholder" class="d-flex flex-column align-items-center justify-content-center p-5 border rounded mb-3" style="min-height: 300px;">
+                            <i class="fas fa-qrcode fa-4x text-gray-300 mb-3"></i>
+                            <p class="mb-0">QR scanner will appear here</p>
+                        </div>
+                        <div id="qr-reader" style="width: 100%; display: none;"></div>
+                        <div id="qr-result" class="alert alert-info d-none mt-3">
+                            <span id="qr-result-message"></span>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="start-scanner" class="btn btn-primary btn-lg">
+                            <i class="fas fa-qrcode me-2"></i>Start QR Scanner
+                        </button>
+                        <button id="stop-scanner" class="btn btn-danger btn-lg" disabled>
+                            <i class="fas fa-stop-circle me-2"></i>Stop Scanner
+                        </button>
+                    </div>
+                    <div class="mt-3 text-start">
+                        <h6 class="font-weight-bold">Instructions:</h6>
+                        <ol class="text-muted">
+                            <li>Click "Start QR Scanner" to activate the scanner</li>
+                            <li>Hold the student's QR code in front of the camera</li>
+                            <li>The system will automatically scan and process the QR code</li>
+                            <li>Click "Stop Scanner" when finished</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Attendance Records -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Today's Attendance Records</h6>
+        </div>
+        <div class="card-body">
+            {% if today_records %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Enrollment No</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance, student in today_records %}
+                        <tr>
+                            <td>{{ student.id }}</td>
+                            <td>
+                                <a href="{{ url_for('student_detail', student_id=student.id) }}">
+                                    {{ student.first_name }} {{ student.last_name }}
+                                </a>
+                            </td>
+                            <td>{{ student.enrollment_no }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ attendance.status }}</span>
+                            </td>
+                            <td>{{ attendance.created_at.strftime('%H:%M:%S') }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {% if attendance.method == 'face' %}
+                                        <i class="fas fa-camera me-1"></i>Face
+                                    {% else %}
+                                        <i class="fas fa-qrcode me-1"></i>QR Code
+                                    {% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-check fa-4x text-gray-300 mb-3"></i>
+                <p class="mb-0">No attendance records for today yet.</p>
+                <p class="text-muted">Use one of the methods above to mark attendance.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include HTML5-QRCode library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    // Face Recognition
+    const startCameraBtn = document.getElementById('start-camera');
+    const captureFaceBtn = document.getElementById('capture-face');
+    const stopCameraBtn = document.getElementById('stop-camera');
+    const videoPlaceholder = document.getElementById('video-placeholder');
+    const videoContainer = document.getElementById('video-container');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const recognitionResult = document.getElementById('recognition-result');
+    const resultMessage = document.getElementById('result-message');
+    
+    let stream = null;
+    
+    startCameraBtn.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            videoPlaceholder.style.display = 'none';
+            videoContainer.style.display = 'block';
+            startCameraBtn.disabled = true;
+            captureFaceBtn.disabled = false;
+            stopCameraBtn.disabled = false;
+            recognitionResult.classList.add('d-none');
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            alert('Error accessing camera. Please make sure your camera is connected and permissions are granted.');
+        }
+    });
+    
+    captureFaceBtn.addEventListener('click', () => {
+        // Capture image from video
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to base64 image
+        const imageData = canvas.toDataURL('image/jpeg');
+        
+        // Show loading state
+        captureFaceBtn.disabled = true;
+        captureFaceBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        recognitionResult.classList.remove('d-none');
+        recognitionResult.className = 'alert alert-info';
+        resultMessage.textContent = 'Processing face recognition...';
+        
+        // Send to server for face recognition
+        fetch('/api/mark_attendance/face', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image: imageData }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                recognitionResult.className = 'alert alert-success';
+                resultMessage.innerHTML = `<i class="fas fa-check-circle me-2"></i>Attendance marked successfully for <strong>${data.student_name}</strong>`;
+                
+                // Refresh the page after 3 seconds to show updated attendance
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } else {
+                recognitionResult.className = 'alert alert-danger';
+                resultMessage.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>${data.message}`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            recognitionResult.className = 'alert alert-danger';
+            resultMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Error processing face recognition. Please try again.';
+        })
+        .finally(() => {
+            captureFaceBtn.disabled = false;
+            captureFaceBtn.innerHTML = '<i class="fas fa-camera me-2"></i>Capture & Recognize';
+        });
+    });
+    
+    stopCameraBtn.addEventListener('click', () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+            videoPlaceholder.style.display = 'flex';
+            videoContainer.style.display = 'none';
+            startCameraBtn.disabled = false;
+            captureFaceBtn.disabled = true;
+            stopCameraBtn.disabled = true;
+        }
+    });
+    
+    // QR Code Scanner
+    const startScannerBtn = document.getElementById('start-scanner');
+    const stopScannerBtn = document.getElementById('stop-scanner');
+    const qrPlaceholder = document.getElementById('qr-placeholder');
+    const qrReader = document.getElementById('qr-reader');
+    const qrResult = document.getElementById('qr-result');
+    const qrResultMessage = document.getElementById('qr-result-message');
+    
+    let html5QrCode;
+    
+    startScannerBtn.addEventListener('click', () => {
+        qrPlaceholder.style.display = 'none';
+        qrReader.style.display = 'block';
+        startScannerBtn.disabled = true;
+        stopScannerBtn.disabled = false;
+        qrResult.classList.add('d-none');
+        
+        html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+            onScanSuccess,
+            onScanFailure
+        );
+    });
+    
+    function onScanSuccess(decodedText, decodedResult) {
+        // Stop scanning
+        html5QrCode.stop();
+        
+        // Show loading state
+        qrResult.classList.remove('d-none');
+        qrResult.className = 'alert alert-info';
+        qrResultMessage.textContent = 'Processing QR code...';
+        
+        // Send to server for QR code verification
+        fetch('/api/mark_attendance/qr', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ qr_data: decodedText }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                qrResult.className = 'alert alert-success';
+                qrResultMessage.innerHTML = `<i class="fas fa-check-circle me-2"></i>Attendance marked successfully for <strong>${data.student_name}</strong>`;
+                
+                // Refresh the page after 3 seconds to show updated attendance
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } else {
+                qrResult.className = 'alert alert-danger';
+                qrResultMessage.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>${data.message}`;
+                
+                // Restart scanner after error
+                setTimeout(() => {
+                    if (html5QrCode) {
+                        html5QrCode.start(
+                            { facingMode: "environment" },
+                            {
+                                fps: 10,
+                                qrbox: { width: 250, height: 250 }
+                            },
+                            onScanSuccess,
+                            onScanFailure
+                        );
+                    }
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            qrResult.className = 'alert alert-danger';
+            qrResultMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Error processing QR code. Please try again.';
+            
+            // Restart scanner after error
+            setTimeout(() => {
+                if (html5QrCode) {
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 }
+                        },
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                }
+            }, 2000);
+        });
+    }
+    
+    function onScanFailure(error) {
+        // Handle scan failure silently
+        console.warn(`QR code scanning failed: ${error}`);
+    }
+    
+    stopScannerBtn.addEventListener('click', () => {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                qrPlaceholder.style.display = 'flex';
+                qrReader.style.display = 'none';
+                startScannerBtn.disabled = false;
+                stopScannerBtn.disabled = true;
+            }).catch(err => {
+                console.error('Error stopping QR scanner:', err);
+            });
+        }
+    });
+</script>
+{% endblock %}

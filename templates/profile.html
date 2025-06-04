@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-circle me-2"></i>User Profile</h1>
+    </div>
+
+    <div class="row">
+        <!-- Profile Information Card -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Profile Information</h6>
+                </div>
+                <div class="card-body">
+                    {% if success_message %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>{{ success_message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if error_message %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ error_message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" readonly>
+                            <small class="form-text text-muted">Username cannot be changed</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ current_user.first_name or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ current_user.last_name or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <input type="text" class="form-control" id="role" value="{{ current_user.role }}" readonly>
+                            <small class="form-text text-muted">Role can only be changed by an administrator</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="last_login" class="form-label">Last Login</label>
+                            <input type="text" class="form-control" id="last_login" value="{{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') if current_user.last_login else 'Never' }}" readonly>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Change Password Card -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Change Password</h6>
+                </div>
+                <div class="card-body">
+                    {% if password_success %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>{{ password_success }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if password_error %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ password_error }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('change_password') }}" id="password-form">
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                            <small class="form-text text-muted">Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            <div id="password-match-feedback" class="invalid-feedback">
+                                Passwords do not match
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="change-password-btn">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Account Security Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Account Security</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="font-weight-bold">Login History</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>IP Address</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for login in login_history %}
+                                    <tr>
+                                        <td>{{ login.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                        <td>{{ login.ip_address }}</td>
+                                        <td>
+                                            {% if login.success %}
+                                            <span class="badge bg-success">Success</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No login history available</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5 class="font-weight-bold">Security Recommendations</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-key text-warning me-2"></i>
+                                    <span>Use a strong password</span>
+                                </div>
+                                <span class="badge bg-{{ 'success' if password_strength >= 3 else 'warning' }} rounded-pill">
+                                    {{ 'Done' if password_strength >= 3 else 'Recommended' }}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-envelope text-warning me-2"></i>
+                                    <span>Verify email address</span>
+                                </div>
+                                <span class="badge bg-{{ 'success' if current_user.email_verified else 'warning' }} rounded-pill">
+                                    {{ 'Done' if current_user.email_verified else 'Recommended' }}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-sync-alt text-warning me-2"></i>
+                                    <span>Regular password updates</span>
+                                </div>
+                                <span class="badge bg-{{ 'success' if password_updated_recently else 'warning' }} rounded-pill">
+                                    {{ 'Done' if password_updated_recently else 'Recommended' }}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordForm = document.getElementById('password-form');
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        const passwordMatchFeedback = document.getElementById('password-match-feedback');
+        const changePasswordBtn = document.getElementById('change-password-btn');
+        
+        // Check if passwords match
+        function checkPasswordMatch() {
+            if (confirmPasswordInput.value === '') {
+                confirmPasswordInput.classList.remove('is-invalid');
+                confirmPasswordInput.classList.remove('is-valid');
+                return;
+            }
+            
+            if (newPasswordInput.value === confirmPasswordInput.value) {
+                confirmPasswordInput.classList.remove('is-invalid');
+                confirmPasswordInput.classList.add('is-valid');
+            } else {
+                confirmPasswordInput.classList.remove('is-valid');
+                confirmPasswordInput.classList.add('is-invalid');
+            }
+        }
+        
+        // Check password strength
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            
+            // Length check
+            if (password.length >= 8) strength += 1;
+            
+            // Contains lowercase
+            if (/[a-z]/.test(password)) strength += 1;
+            
+            // Contains uppercase
+            if (/[A-Z]/.test(password)) strength += 1;
+            
+            // Contains number
+            if (/[0-9]/.test(password)) strength += 1;
+            
+            // Contains special character
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+            
+            return strength;
+        }
+        
+        // Add event listeners
+        newPasswordInput.addEventListener('input', function() {
+            checkPasswordMatch();
+        });
+        
+        confirmPasswordInput.addEventListener('input', function() {
+            checkPasswordMatch();
+        });
+        
+        // Form submission validation
+        passwordForm.addEventListener('submit', function(e) {
+            if (newPasswordInput.value !== confirmPasswordInput.value) {
+                e.preventDefault();
+                confirmPasswordInput.classList.add('is-invalid');
+            }
+            
+            const strength = checkPasswordStrength(newPasswordInput.value);
+            if (strength < 3) {
+                e.preventDefault();
+                alert('Password is too weak. Please use at least 8 characters with a mix of uppercase, lowercase, numbers, and special characters.');
+            }
+        });
+    });
+</script>
+{% endblock %}

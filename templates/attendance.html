@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Records - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-clipboard-list me-2"></i>Attendance Records</h1>
+        <a href="{{ url_for('mark_attendance_page') }}" class="btn btn-primary">
+            <i class="fas fa-camera me-2"></i>Mark Attendance
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Attendance List</h6>
+            <div class="d-flex">
+                <form class="me-2" method="GET" action="{{ url_for('attendance_list') }}">
+                    <div class="input-group">
+                        <input type="date" class="form-control" name="date" value="{{ filter_date.strftime('%Y-%m-%d') }}">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-calendar-day me-2"></i>Showing attendance for: <strong>{{ filter_date.strftime('%A, %B %d, %Y') }}</strong>
+            </div>
+            
+            {% if attendance_records %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="attendanceTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Enrollment No</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance, student in attendance_records %}
+                        <tr>
+                            <td>{{ student.id }}</td>
+                            <td>
+                                <a href="{{ url_for('student_detail', student_id=student.id) }}">
+                                    {{ student.first_name }} {{ student.last_name }}
+                                </a>
+                            </td>
+                            <td>{{ student.enrollment_no }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ attendance.status }}</span>
+                            </td>
+                            <td>{{ attendance.created_at.strftime('%H:%M:%S') }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('student_detail', student_id=student.id) }}" class="btn btn-sm btn-info text-white">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-check fa-4x text-gray-300 mb-3"></i>
+                <p class="mb-0">No attendance records found for this date.</p>
+                <a href="{{ url_for('mark_attendance_page') }}" class="btn btn-primary mt-3">
+                    <i class="fas fa-camera me-2"></i>Mark Attendance
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Attendance Summary -->
+    {% if attendance_records %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Attendance Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-left-success h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Present Students</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendance_records|length }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-left-danger h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Absent Students</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ students_count - attendance_records|length }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <h6 class="font-weight-bold">Attendance Rate</h6>
+                        <div class="progress">
+                            {% set attendance_rate = (attendance_records|length / students_count * 100)|round|int if students_count > 0 else 0 %}
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ attendance_rate }}%" 
+                                aria-valuenow="{{ attendance_rate }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ attendance_rate }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Time Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="timeDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-danger {
+        border-left: 0.25rem solid #e74a3b !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Search functionality
+    document.getElementById('searchInput')?.addEventListener('keyup', function() {
+        const searchText = this.value.toLowerCase();
+        const table = document.getElementById('attendanceTable');
+        const rows = table.getElementsByTagName('tr');
+        
+        for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+            let found = false;
+            
+            for (let j = 0; j < cells.length; j++) {
+                const cellText = cells[j].textContent.toLowerCase();
+                if (cellText.includes(searchText)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (found) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+    
+    // Time distribution chart
+    {% if attendance_records %}
+    const ctx = document.getElementById('timeDistributionChart');
+    
+    // Group attendance records by hour
+    const timeData = {};
+    {% for attendance, student in attendance_records %}
+        const hour = {{ attendance.created_at.hour }};
+        if (timeData[hour]) {
+            timeData[hour]++;
+        } else {
+            timeData[hour] = 1;
+        }
+    {% endfor %}
+    
+    // Prepare data for chart
+    const hours = [];
+    const counts = [];
+    for (let i = 0; i < 24; i++) {
+        hours.push(i + ':00');
+        counts.push(timeData[i] || 0);
+    }
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: hours,
+            datasets: [{
+                label: 'Attendance Count',
+                data: counts,
+                backgroundColor: 'rgba(78, 115, 223, 0.7)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Attendance by Hour of Day'
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

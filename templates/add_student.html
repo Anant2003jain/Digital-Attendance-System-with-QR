@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Student - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-plus me-2"></i>Add New Student</h1>
+        <a href="{{ url_for('students_list') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Students
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Student Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_student') }}">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="enrollment_no" class="form-label">Enrollment Number</label>
+                            <input type="text" class="form-control" id="enrollment_no" name="enrollment_no" required>
+                            <div class="form-text">This should be a unique identifier for the student.</div>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="reset" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-redo me-1"></i>Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Student
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Registration Guide</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5><i class="fas fa-info-circle me-2 text-info"></i>Important Information</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">All fields are required</li>
+                            <li class="list-group-item">Enrollment number must be unique</li>
+                            <li class="list-group-item">A QR code will be automatically generated</li>
+                        </ul>
+                    </div>
+                    <div class="mb-4">
+                        <h5><i class="fas fa-camera me-2 text-warning"></i>Face Registration</h5>
+                        <p>After adding the student, you'll need to train the model with the student's face data.</p>
+                        <p>Go to the <a href="{{ url_for('train_model_page') }}">Train Model</a> page after registering students.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-capitalize first and last name
+    document.getElementById('first_name').addEventListener('input', function() {
+        this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
+    });
+    
+    document.getElementById('last_name').addEventListener('input', function() {
+        this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1);
+    });
+    
+    // Auto-uppercase enrollment number
+    document.getElementById('enrollment_no').addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+</script>
+{% endblock %}
