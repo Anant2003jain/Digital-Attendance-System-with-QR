@@ -86,4 +86,5 @@ def face_prediction():
     cap.release()
     cv2.destroyAllWindows()
 
-#face_prediction()
+if __name__ == "__main__":
+    face_prediction()

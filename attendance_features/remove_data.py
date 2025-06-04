@@ -10,9 +10,9 @@ def remove_user():
         
         nameID = f"{firstname}{lastname}-{enroll}"
 
-        csv_file_path = r"StudentData\class.csv"
-        image_folder_path = os.path.join(r"StudentData\images", nameID)
-        qr_code_path = os.path.join(r"StudentData\QR", f"{nameID}.png")
+        csv_file_path = r"student_data\class.csv"
+        image_folder_path = os.path.join(r"student_data\images", nameID)
+        qr_code_path = os.path.join(r"student_data\QR", f"{nameID}.png")
 
         # Read CSV file
         df = pd.read_csv(csv_file_path)

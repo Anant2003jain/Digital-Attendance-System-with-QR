@@ -5,7 +5,7 @@ from csv import writer
 import qrcode as qc
 
 video=cv2.VideoCapture(0)
-facedetect=cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+facedetect=cv2.CascadeClassifier(r'Model\haarcascade_frontalface_default.xml')
 
 def register_user():
     firstname = str(input("Enter First Name: ")).title().strip()
@@ -13,7 +13,7 @@ def register_user():
     enroll = str(input("Enter Enrollment No: ")).upper().strip()
     
     nameID = firstname + lastname
-    path = r'StudentData//images//' + nameID + "-" + enroll
+    path = r'student_data\images\\' + nameID + "-" + enroll
     
     isExist = os.path.exists(path)
     if not isExist:
@@ -21,7 +21,7 @@ def register_user():
         print("Directory created successfully.")
         
         # Code to add user data to CSV file (class.csv)
-        df = pd.read_csv(r"StudentData//class.csv")
+        df = pd.read_csv(r"student_data\class.csv")
         if df.empty:
             lst = [0, (nameID + "-" + enroll)]
         else:        
@@ -30,7 +30,7 @@ def register_user():
             i = str(df3 + 1)
             lst = [i, (nameID + "-" + enroll)]
             
-        with open(r'StudentData//class.csv', 'a') as f_object:
+        with open(r'student_data\class.csv', 'a') as f_object:
             writer_object = writer(f_object)
             writer_object.writerow(lst)
             f_object.close()
@@ -41,7 +41,7 @@ def register_user():
             faces = facedetect.detectMultiScale(frame, 1.3, 5)
             for x, y, w, h in faces:
                 count = count + 1
-                img_name = r'StudentData//images//' + nameID + '-' + enroll + '//' + str(count) + '.jpg'
+                img_name = r'student_data\images\\' + nameID + '-' + enroll + '//' + str(count) + '.jpg'
                 print("Creating Images........." + img_name)
                 cv2.imwrite(img_name, frame[y:y+h, x:x+w])
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
@@ -60,7 +60,7 @@ def register_user():
             features.add_data(inp)
             features.make(fit=True)
             generate_image = features.make_image(fill_color="black", back_color="white")
-            generate_image.save(r"StudentData//QR//{}.png".format(inp))
+            generate_image.save(r"student_data//QR//{}.png".format(inp))
             print("Successfully Created Student QR")
         except Exception as e:
             print("Unable to generate QR: ", str(e))

@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 
 # Load label mapping
 label_dict = {}
-with open(r'StudentData//class.csv', mode='r') as csvfile:
+with open(r'student_data\class.csv', mode='r') as csvfile:
     csvreader = csv.DictReader(csvfile) 
     for row in csvreader:
         label_dict[int(row['classid'])] = row['classname']
@@ -35,8 +35,8 @@ def face_train():
     # Load training data
     train_data = []
     labels = []
-    for folder_name in os.listdir(r'StudentData//images'):
-        folder_path = os.path.join(r'StudentData//images', folder_name)
+    for folder_name in os.listdir(r'student_data\images'):
+        folder_path = os.path.join(r'student_data\images', folder_name)
         images = load_images_from_folder(folder_path)
         train_data.extend(images)
         labels.extend([folder_name] * len(images))
@@ -95,5 +95,5 @@ def face_train():
     
     print(model.summary())
 
-
-#G7model_Train()
+if __name__ == "__main__":
+    face_train()
