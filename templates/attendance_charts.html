@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Charts - Digital Attendance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-chart-pie me-2"></i>Attendance Charts</h1>
+        <div>
+            <a href="{{ url_for('attendance_list') }}" class="btn btn-primary me-2">
+                <i class="fas fa-clipboard-list me-1"></i>View Attendance
+            </a>
+            <button id="download-charts" class="btn btn-success">
+                <i class="fas fa-download me-1"></i>Download All
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Overall Attendance Chart -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Overall Attendance Rate</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink1">
+                            <div class="dropdown-header">Chart Options:</div>
+                            <a class="dropdown-item" href="#" id="download-overall"><i class="fas fa-download me-1"></i>Download</a>
+                            <a class="dropdown-item" href="#" id="refresh-overall"><i class="fas fa-sync-alt me-1"></i>Refresh</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="overallAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Comparison Chart -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Student Attendance Comparison</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink2">
+                            <div class="dropdown-header">Chart Options:</div>
+                            <a class="dropdown-item" href="#" id="download-comparison"><i class="fas fa-download me-1"></i>Download</a>
+                            <a class="dropdown-item" href="#" id="refresh-comparison"><i class="fas fa-sync-alt me-1"></i>Refresh</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="studentComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Individual Student Charts -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Individual Student Attendance</h6>
+                </div>
+                <div class="card-body">
+                    {% if charts %}
+                    <div class="row">
+                        {% for chart in charts %}
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <div class="card shadow h-100">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">{{ chart.student_name }}</h6>
+                                    <div class="dropdown no-arrow">
+                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink{{ chart.student_id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink{{ chart.student_id }}">
+                                            <div class="dropdown-header">Chart Options:</div>
+                                            <a class="dropdown-item" href="#" data-student-id="{{ chart.student_id }}" data-chart-path="{{ chart.chart_path }}" class="download-student-chart"><i class="fas fa-download me-1"></i>Download</a>
+                                            <a class="dropdown-item" href="{{ url_for('student_detail', student_id=chart.student_id) }}"><i class="fas fa-user me-1"></i>View Details</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <img src="{{ url_for('static', filename=chart.chart_path.replace('static/', '')) }}" class="img-fluid" alt="{{ chart.student_name }} Attendance Chart">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No attendance data available for charts. Mark attendance for students to generate charts.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Sample data for charts - this would be replaced with real data from the backend
+    const overallCtx = document.getElementById('overallAttendanceChart').getContext('2d');
+    const overallChart = new Chart(overallCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Present', 'Absent'],
+            datasets: [{
+                data: [75, 25],
+                backgroundColor: ['#4e73df', '#e74a3b'],
+                hoverBackgroundColor: ['#2e59d9', '#be2617'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: true,
+                position: 'bottom'
+            },
+            cutoutPercentage: 80,
+        },
+    });
+
+    const comparisonCtx = document.getElementById('studentComparisonChart').getContext('2d');
+    const comparisonChart = new Chart(comparisonCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Student 1', 'Student 2', 'Student 3', 'Student 4', 'Student 5'],
+            datasets: [{
+                label: 'Attendance Rate (%)',
+                data: [90, 85, 70, 95, 80],
+                backgroundColor: '#36b9cc',
+                hoverBackgroundColor: '#2c9faf',
+                borderColor: '#36b9cc',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 6
+                    },
+                    maxBarThickness: 25,
+                }],
+                yAxes: [{
+                    ticks: {
+                        min: 0,
+                        max: 100,
+                        maxTicksLimit: 5,
+                        padding: 10,
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
+            },
+            legend: {
+                display: false
+            },
+            tooltips: {
+                titleMarginBottom: 10,
+                titleFontColor: '#6e707e',
+                titleFontSize: 14,
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+                callbacks: {
+                    label: function(tooltipItem, chart) {
+                        return tooltipItem.yLabel + '%';
+                    }
+                }
+            },
+        }
+    });
+
+    // Download chart functionality
+    document.getElementById('download-overall').addEventListener('click', function() {
+        const link = document.createElement('a');
+        link.download = 'overall-attendance-chart.png';
+        link.href = document.getElementById('overallAttendanceChart').toDataURL('image/png');
+        link.click();
+    });
+
+    document.getElementById('download-comparison').addEventListener('click', function() {
+        const link = document.createElement('a');
+        link.download = 'student-comparison-chart.png';
+        link.href = document.getElementById('studentComparisonChart').toDataURL('image/png');
+        link.click();
+    });
+
+    // Download all charts
+    document.getElementById('download-charts').addEventListener('click', function() {
+        document.getElementById('download-overall').click();
+        document.getElementById('download-comparison').click();
+        
+        // Download individual student charts
+        document.querySelectorAll('.download-student-chart').forEach(function(element) {
+            element.click();
+        });
+    });
+
+    // Individual student chart download
+    document.querySelectorAll('.download-student-chart').forEach(function(element) {
+        element.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            const chartPath = this.getAttribute('data-chart-path');
+            const studentName = this.closest('.card').querySelector('.card-header h6').textContent.trim();
+            
+            const link = document.createElement('a');
+            link.download = studentName.replace(/\s+/g, '-').toLowerCase() + '-attendance-chart.png';
+            link.href = chartPath;
+            link.click();
+        });
+    });
+</script>
+{% endblock %}

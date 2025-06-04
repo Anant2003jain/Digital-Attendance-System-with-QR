@@ -6,6 +6,15 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h1>
+        {% if session.role == 'admin' %}
+        <div>
+            <span class="badge bg-primary p-2">Admin Dashboard</span>
+        </div>
+        {% else %}
+        <div>
+            <span class="badge bg-info p-2">Student Dashboard</span>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Stats Cards -->
@@ -100,19 +109,21 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
+                        {% if session.role == 'admin' %}
+                        <!-- Admin Quick Actions -->
                         <div class="col-md-3 mb-3">
                             <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-block py-3">
                                 <i class="fas fa-user-plus me-2"></i>Add New Student
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('mark_attendance_page') }}" class="btn btn-success btn-block py-3">
-                                <i class="fas fa-camera me-2"></i>Mark Attendance
+                            <a href="{{ url_for('users_list') }}" class="btn btn-danger btn-block py-3">
+                                <i class="fas fa-users-cog me-2"></i>Manage Users
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('attendance_list') }}" class="btn btn-info btn-block py-3 text-white">
-                                <i class="fas fa-clipboard-list me-2"></i>View Attendance
+                            <a href="{{ url_for('train_model_page') }}" class="btn btn-secondary btn-block py-3">
+                                <i class="fas fa-brain me-2"></i>Train Model
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
@@ -120,6 +131,24 @@
                                 <i class="fas fa-chart-pie me-2"></i>View Charts
                             </a>
                         </div>
+                        {% else %}
+                        <!-- Student Quick Actions -->
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('mark_attendance_page') }}" class="btn btn-success btn-block py-3">
+                                <i class="fas fa-camera me-2"></i>Mark My Attendance
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('attendance_list') }}" class="btn btn-info btn-block py-3 text-white">
+                                <i class="fas fa-clipboard-list me-2"></i>View My Attendance
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('attendance_charts') }}" class="btn btn-warning btn-block py-3">
+                                <i class="fas fa-chart-pie me-2"></i>My Attendance Charts
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -131,7 +160,11 @@
         <div class="col-md-12">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Recent Attendance</h6>
+                    {% if session.role == 'admin' %}
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Attendance (All Students)</h6>
+                    {% else %}
+                    <h6 class="m-0 font-weight-bold text-primary">My Recent Attendance</h6>
+                    {% endif %}
                     <a href="{{ url_for('attendance_list') }}" class="btn btn-sm btn-primary">
                         View All
                     </a>
@@ -142,27 +175,41 @@
                         <table class="table table-bordered table-hover">
                             <thead class="table-light">
                                 <tr>
+                                    {% if session.role == 'admin' %}
                                     <th>Student</th>
                                     <th>Enrollment No</th>
+                                    {% endif %}
                                     <th>Date</th>
                                     <th>Status</th>
                                     <th>Time</th>
+                                    {% if session.role == 'admin' %}
+                                    <th>Actions</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for attendance, student in recent_attendance %}
                                 <tr>
+                                    {% if session.role == 'admin' %}
                                     <td>
                                         <a href="{{ url_for('student_detail', student_id=student.id) }}">
                                             {{ student.first_name }} {{ student.last_name }}
                                         </a>
                                     </td>
                                     <td>{{ student.enrollment_no }}</td>
+                                    {% endif %}
                                     <td>{{ attendance.date.strftime('%Y-%m-%d') }}</td>
                                     <td>
                                         <span class="badge bg-success">{{ attendance.status }}</span>
                                     </td>
                                     <td>{{ attendance.created_at.strftime('%H:%M:%S') }}</td>
+                                    {% if session.role == 'admin' %}
+                                    <td>
+                                        <a href="{{ url_for('student_detail', student_id=student.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                    {% endif %}
                                 </tr>
                                 {% endfor %}
                             </tbody>

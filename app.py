@@ -379,7 +379,15 @@ def attendance_list():
 @app.route('/mark-attendance')
 @login_required
 def mark_attendance_page():
-    return render_template('mark_attendance.html')
+    # Get today's attendance records
+    today = datetime.utcnow().date()
+    today_records = db.session.query(Attendance, Student)\
+        .join(Student)\
+        .filter(Attendance.date == today)\
+        .order_by(Attendance.created_at.desc())\
+        .all()
+    
+    return render_template('mark_attendance.html', today_records=today_records)
 
 @app.route('/video_feed')
 def video_feed():
@@ -681,6 +689,167 @@ def edit_user(user_id):
         return redirect(url_for('users_list'))
     
     return render_template('edit_user.html', user=user)
+
+@app.route('/api/mark_attendance/face', methods=['POST'])
+@login_required
+def mark_attendance_face():
+    data = request.json
+    image_data = data.get('image')
+    
+    if not image_data:
+        return jsonify({'success': False, 'message': 'No image data provided'})
+    
+    try:
+        # Decode base64 image
+        image_data = image_data.split(',')[1]
+        image_bytes = base64.b64decode(image_data)
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'success': False, 'message': 'Invalid image data'})
+        
+        # Convert to grayscale for face detection
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Detect faces
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        if len(faces) == 0:
+            return jsonify({'success': False, 'message': 'No face detected in the image'})
+        
+        # Load face model
+        model_path = 'static/models/face_recognition_model.h5'
+        if not os.path.exists(model_path):
+            return jsonify({'success': False, 'message': 'Face recognition model not trained yet'})
+        
+        face_model = load_model(model_path)
+        
+        # Process the first detected face
+        x, y, w, h = faces[0]
+        face_roi = gray[y:y+h, x:x+w]
+        face_roi = cv2.resize(face_roi, (64, 64))
+        face_roi = np.expand_dims(face_roi, axis=-1)
+        face_roi = face_roi / 255.0
+        face_roi = np.reshape(face_roi, (1, 64, 64, 1))
+        
+        # Make prediction
+        prediction = face_model.predict(face_roi)
+        predicted_label = np.argmax(prediction)
+        confidence = np.max(prediction) * 100
+        
+        if confidence < 70:
+            return jsonify({'success': False, 'message': f'Face recognition confidence too low ({confidence:.2f}%)'})
+        
+        # Get all students
+        students = Student.query.all()
+        student_dict = {}
+        
+        # Load label mapping from class.csv if it exists
+        label_dict = {}
+        class_csv_path = 'student_data/class.csv'
+        if os.path.exists(class_csv_path):
+            with open(class_csv_path, mode='r') as csvfile:
+                csvreader = csv.DictReader(csvfile)
+                for row in csvreader:
+                    label_dict[int(row['classid'])] = row['classname']
+        
+        # If we have label mapping, use it
+        if label_dict and predicted_label in label_dict:
+            predicted_name_id = label_dict[predicted_label]
+            student = Student.query.filter_by(name_id=predicted_name_id).first()
+        else:
+            # Otherwise, try to match with student IDs directly
+            # This is a fallback and might not work well
+            if predicted_label < len(students):
+                student = students[predicted_label]
+            else:
+                return jsonify({'success': False, 'message': 'Could not match face to any registered student'})
+        
+        if not student:
+            return jsonify({'success': False, 'message': 'Could not match face to any registered student'})
+        
+        # Check if attendance already marked today
+        today = datetime.utcnow().date()
+        existing_attendance = Attendance.query.filter_by(
+            student_id=student.id, 
+            date=today
+        ).first()
+        
+        if existing_attendance:
+            return jsonify({
+                'success': False, 
+                'message': f'Attendance already marked for {student.first_name} {student.last_name}'
+            })
+        
+        # Mark attendance
+        new_attendance = Attendance(
+            student_id=student.id,
+            date=today,
+            status='Present'
+        )
+        db.session.add(new_attendance)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Attendance marked successfully',
+            'student_name': f'{student.first_name} {student.last_name}',
+            'confidence': f'{confidence:.2f}%'
+        })
+        
+    except Exception as e:
+        print(f"Error in face recognition: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error processing image: {str(e)}'})
+
+@app.route('/api/mark_attendance/qr', methods=['POST'])
+@login_required
+def mark_attendance_qr():
+    data = request.json
+    qr_data = data.get('qr_data')
+    
+    if not qr_data:
+        return jsonify({'success': False, 'message': 'No QR code data provided'})
+    
+    try:
+        # Find student by name_id (which should be stored in QR code)
+        student = Student.query.filter_by(name_id=qr_data).first()
+        
+        if not student:
+            return jsonify({'success': False, 'message': 'Invalid QR code. Student not found.'})
+        
+        # Check if attendance already marked today
+        today = datetime.utcnow().date()
+        existing_attendance = Attendance.query.filter_by(
+            student_id=student.id, 
+            date=today
+        ).first()
+        
+        if existing_attendance:
+            return jsonify({
+                'success': False, 
+                'message': f'Attendance already marked for {student.first_name} {student.last_name}'
+            })
+        
+        # Mark attendance
+        new_attendance = Attendance(
+            student_id=student.id,
+            date=today,
+            status='Present'
+        )
+        db.session.add(new_attendance)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Attendance marked successfully',
+            'student_name': f'{student.first_name} {student.last_name}'
+        })
+        
+    except Exception as e:
+        print(f"Error in QR code processing: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error processing QR code: {str(e)}'})
 
 if __name__ == '__main__':
     with app.app_context():
